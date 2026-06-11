@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/lib/validation";
 import { login, clearAuthError } from "@/store/slices/authSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { isLoggedIn } from "@/lib/api";
 import AuthCard from "@/components/auth/AuthCard";
 import Button from "@/components/ui/Button";
 
@@ -60,11 +59,13 @@ export default function LoginPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const error = useAppSelector((s) => s.auth.error);
+  const authStatus = useAppSelector((s) => s.auth.status);
   const [showPassword, setShowPassword] = useState(false);
 
+  // If already authenticated in this session, skip the login form.
   useEffect(() => {
-    if (isLoggedIn()) router.replace("/dashboard");
-  }, [router]);
+    if (authStatus === "authenticated") router.replace("/dashboard");
+  }, [authStatus, router]);
 
   const {
     register,

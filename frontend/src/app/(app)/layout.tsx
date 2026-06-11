@@ -2,7 +2,6 @@
 
 import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { isLoggedIn } from "@/lib/api";
 import { fetchMe } from "@/store/slices/authSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import Sidebar from "@/components/layout/Sidebar";
@@ -14,13 +13,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const status = useAppSelector((s) => s.auth.status);
 
+  // Validate the session against the backend on mount. The auth tokens live in
+  // HttpOnly cookies that JS cannot read, but they ARE sent with this request
+  // (withCredentials). We rely on the /auth/me result — NOT document.cookie —
+  // because cross-domain cookies are not readable by the frontend's JS.
   useEffect(() => {
-    if (!isLoggedIn()) {
-      router.replace("/login");
-      return;
+    if (status === "idle") {
+      dispatch(fetchMe());
     }
-    dispatch(fetchMe());
-  }, [dispatch, router]);
+  }, [status, dispatch]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
