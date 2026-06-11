@@ -25,6 +25,12 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000"
 
+    # Cookie policy. For a split deployment (frontend and backend on different domains),
+    # cross-site cookies require samesite="none" + secure=True. For same-origin/local use
+    # "lax". Override via COOKIE_SAMESITE / COOKIE_SECURE env vars.
+    cookie_samesite: str = "none"
+    cookie_secure: bool = True
+
     admin_email: str = "admin@example.com"
     admin_password: str = "Admin123!"
 

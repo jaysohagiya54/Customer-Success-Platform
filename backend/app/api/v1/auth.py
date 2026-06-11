@@ -24,7 +24,16 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 _ACCESS_COOKIE = "csp_access"
 _REFRESH_COOKIE = "csp_refresh"
 _PRESENCE_COOKIE = "csp_logged_in"  # not HttpOnly — JS reads this as auth guard signal
-_SECURE_OPTS: dict = dict(httponly=True, secure=True, samesite="strict", path="/")
+
+# Cross-site cookies (frontend on Vercel, backend on Render = different domains) require
+# SameSite=None + Secure. SameSite=Strict silently drops the cookie cross-origin, which
+# made the browser never store the session → login looped back. Configurable via
+# COOKIE_SAMESITE for same-origin deployments that prefer "strict"/"lax".
+from app.core.config import get_settings as _get_settings
+
+_SAMESITE = _get_settings().cookie_samesite
+_SECURE = _get_settings().cookie_secure
+_SECURE_OPTS: dict = dict(httponly=True, secure=_SECURE, samesite=_SAMESITE, path="/")
 
 
 def _set_auth_cookies(response: Response, tokens: TokenPair) -> None:
@@ -32,13 +41,13 @@ def _set_auth_cookies(response: Response, tokens: TokenPair) -> None:
     response.set_cookie(_REFRESH_COOKIE, tokens.refresh_token, max_age=7 * 24 * 3600, **_SECURE_OPTS)
     # JS-readable presence flag (no token value, just signals an active session exists)
     response.set_cookie(_PRESENCE_COOKIE, "1", max_age=7 * 24 * 3600,
-                        httponly=False, secure=True, samesite="strict", path="/")
+                        httponly=False, secure=_SECURE, samesite=_SAMESITE, path="/")
 
 
 def _clear_auth_cookies(response: Response) -> None:
-    response.delete_cookie(_ACCESS_COOKIE, path="/", httponly=True, secure=True, samesite="strict")
-    response.delete_cookie(_REFRESH_COOKIE, path="/", httponly=True, secure=True, samesite="strict")
-    response.delete_cookie(_PRESENCE_COOKIE, path="/", httponly=False, secure=True, samesite="strict")
+    response.delete_cookie(_ACCESS_COOKIE, path="/", httponly=True, secure=_SECURE, samesite=_SAMESITE)
+    response.delete_cookie(_REFRESH_COOKIE, path="/", httponly=True, secure=_SECURE, samesite=_SAMESITE)
+    response.delete_cookie(_PRESENCE_COOKIE, path="/", httponly=False, secure=_SECURE, samesite=_SAMESITE)
 
 
 class LogoutRequest(BaseModel):
