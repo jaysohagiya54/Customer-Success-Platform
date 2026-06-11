@@ -37,8 +37,12 @@ async def init_db() -> None:
 async def run_migrations() -> None:
     """Apply pending Alembic migrations at startup. Safe to call multiple times."""
     import asyncio
+    import os
+    from pathlib import Path
     from alembic import command
     from alembic.config import Config
 
-    cfg = Config("alembic.ini")
+    # Resolve alembic.ini relative to this file so it works regardless of CWD
+    ini_path = Path(__file__).resolve().parent.parent.parent / "alembic.ini"
+    cfg = Config(str(ini_path))
     await asyncio.get_event_loop().run_in_executor(None, command.upgrade, cfg, "head")

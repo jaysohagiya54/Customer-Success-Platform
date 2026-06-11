@@ -13,10 +13,14 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Override sqlalchemy.url from DATABASE_URL env var so Docker works without editing alembic.ini
+# Override sqlalchemy.url from DATABASE_URL env var so Docker / Render works without editing alembic.ini
 database_url = os.environ.get("DATABASE_URL", "")
 if database_url:
-    # asyncpg URL must be postgresql+asyncpg for async engine; alembic offline can use psycopg2 URL
+    # Rewrite plain postgres(ql):// → postgresql+asyncpg:// for async engine
+    for _prefix in ("postgresql://", "postgres://"):
+        if database_url.startswith(_prefix):
+            database_url = "postgresql+asyncpg://" + database_url[len(_prefix):]
+            break
     config.set_main_option("sqlalchemy.url", database_url)
 
 from app.core.database import Base  # noqa: E402

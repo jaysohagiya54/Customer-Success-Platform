@@ -171,6 +171,7 @@ npm run typecheck
    - **Runtime:** Python 3
    - **Build Command:** `pip install -r requirements.txt`
    - **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Python Version:** `3.12.0` (or leave blank — `.python-version` file pins it)
    - **Plan:** Free
 3. Under **Environment Variables**, add:
    ```
