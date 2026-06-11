@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/lib/validation";
-import { login, clearAuthError } from "@/store/slices/authSlice";
+import { login, clearAuthError, fetchMe } from "@/store/slices/authSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import AuthCard from "@/components/auth/AuthCard";
 import Button from "@/components/ui/Button";
@@ -62,7 +62,13 @@ export default function LoginPage() {
   const authStatus = useAppSelector((s) => s.auth.status);
   const [showPassword, setShowPassword] = useState(false);
 
-  // If already authenticated in this session, skip the login form.
+  // Probe for an existing session (HttpOnly cookie) on mount — covers users who
+  // open /login directly while already logged in.
+  useEffect(() => {
+    if (authStatus === "idle") dispatch(fetchMe());
+  }, [authStatus, dispatch]);
+
+  // If already authenticated, skip the login form.
   useEffect(() => {
     if (authStatus === "authenticated") router.replace("/dashboard");
   }, [authStatus, router]);

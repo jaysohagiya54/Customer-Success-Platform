@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterInput } from "@/lib/validation";
-import { register as registerThunk, clearAuthError } from "@/store/slices/authSlice";
+import { register as registerThunk, clearAuthError, fetchMe } from "@/store/slices/authSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import AuthCard from "@/components/auth/AuthCard";
 import Button from "@/components/ui/Button";
@@ -61,6 +61,10 @@ export default function RegisterPage() {
   const error = useAppSelector((s) => s.auth.error);
   const authStatus = useAppSelector((s) => s.auth.status);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (authStatus === "idle") dispatch(fetchMe());
+  }, [authStatus, dispatch]);
 
   useEffect(() => {
     if (authStatus === "authenticated") router.replace("/dashboard");
