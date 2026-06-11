@@ -10,7 +10,14 @@ class Base(DeclarativeBase):
     pass
 
 
-engine = create_async_engine(get_settings().database_url, pool_pre_ping=True)
+def _async_db_url(url: str) -> str:
+    """Rewrite plain postgres:// or postgresql:// to use asyncpg driver."""
+    for prefix in ("postgresql://", "postgres://"):
+        if url.startswith(prefix):
+            return "postgresql+asyncpg://" + url[len(prefix):]
+    return url
+
+engine = create_async_engine(_async_db_url(get_settings().database_url), pool_pre_ping=True)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 

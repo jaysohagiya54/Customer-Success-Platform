@@ -154,19 +154,37 @@ npm run typecheck
 
 ### Step 2 — Deploy backend to Render
 
-1. Push this repo to GitHub (if not already)
-2. Go to [render.com](https://render.com) → **New → Blueprint**
-3. Connect your GitHub repo — Render detects `render.yaml` automatically
-4. Click **Apply** — this creates:
-   - `csp-backend` web service (FastAPI)
-   - `csp-postgres` database (PostgreSQL 16)
-5. After creation, go to `csp-backend` → **Environment** and set these manually:
+> **Note:** Use **New → Web Service** manually — Blueprint requires a paid plan.
+
+**2a — Create the Postgres database first**
+
+1. Go to [render.com](https://render.com) → **New → PostgreSQL**
+2. Name: `csp-postgres` | Region: pick closest to you | Plan: **Free**
+3. Click **Create Database** — wait ~1 min
+4. Copy the **Internal Database URL** (use this for `DATABASE_URL`)
+
+**2b — Create the web service**
+
+1. **New → Web Service** → connect your GitHub repo
+2. Set:
+   - **Root Directory:** `backend`
+   - **Runtime:** Python 3
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Plan:** Free
+3. Under **Environment Variables**, add:
    ```
+   DATABASE_URL     = <Internal Database URL from step 2a — paste as-is, app rewrites the driver prefix automatically>
    REDIS_URL        = <your Upstash Redis URL from Step 1>
+   JWT_SECRET_KEY   = <run: python -c "import secrets; print(secrets.token_urlsafe(48))">
+   ADMIN_EMAIL      = admin@example.com
    ADMIN_PASSWORD   = <choose a strong password>
-   CORS_ORIGINS     = https://your-app.vercel.app   ← set after Step 3
+   CORS_ORIGINS     = https://your-app.vercel.app   ← update after Step 3
+   OPENAI_API_KEY   = <optional — leave blank for heuristic fallback>
+   OPENAI_MODEL     = gpt-4o-mini
    ```
-6. Wait for deploy to finish — copy your backend URL: `https://csp-backend-xxxx.onrender.com`
+4. Click **Create Web Service** — wait for deploy
+5. Copy your backend URL: `https://csp-backend-xxxx.onrender.com`
 
 ---
 
