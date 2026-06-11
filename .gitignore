@@ -1,0 +1,44 @@
+﻿# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+
+# Alembic
+backend/alembic/versions/*.pyc
+
+# Lockfile (generated — do not commit unless intentional)
+# backend/requirements.lock
+
+# Node
+node_modules/
+.next/
+out/
+coverage/
+.turbo/
+*.tsbuildinfo
+
+# Env
+.env
+.env.*
+!.env.example
+*.env.local
+
+# Docker
+*.pid
+
+# Docs (generated artefacts)
+docs/
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log
+backend-test-output.txt

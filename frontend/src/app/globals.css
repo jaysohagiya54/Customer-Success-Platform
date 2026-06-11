@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Inter font ─────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ─── Theme custom properties ────────────────────────────────── */
+:root {
+  --bg: #F9F7F2;
+  --bg-surface: #FFFFFF;
+  --bg-surface-2: #F3F0E9;
+  --bg-sidebar: #F3F0E9;
+  --border: #E5E2DB;
+  --text: #1D1D1B;
+  --text-soft: #4A4A48;
+  --text-muted: #7A7A78;
+  --text-placeholder: #A8A8A6;
+  --accent: #D97757;
+  --accent-hover: #C86644;
+  --ring: rgba(217, 119, 87, 0.35);
+  --shadow-sm: 0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px 0 rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 30px 0 rgba(0,0,0,0.10), 0 4px 8px -4px rgba(0,0,0,0.06);
+}
+
+.dark {
+  --bg: #151515;
+  --bg-surface: #1E1E1E;
+  --bg-surface-2: #252525;
+  --bg-sidebar: #181818;
+  --border: #2E2E2E;
+  --text: #E8E8E8;
+  --text-soft: #C0C0BE;
+  --text-muted: #7A7A78;
+  --text-placeholder: #5A5A58;
+  --accent: #D97757;
+  --accent-hover: #E08868;
+  --ring: rgba(217, 119, 87, 0.4);
+  --shadow-sm: 0 1px 3px 0 rgba(0,0,0,0.3), 0 1px 2px -1px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px 0 rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 30px 0 rgba(0,0,0,0.5), 0 4px 8px -4px rgba(0,0,0,0.4);
+}
+
+/* ─── Base ───────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 300ms;
+  transition-timing-function: ease;
+}
+
+/* Exempt transitions that shouldn't animate (transform, width etc.) */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ─── Utility layer extensions ───────────────────────────────── */
+@layer utilities {
+  .bg-theme { background-color: var(--bg); }
+  .bg-surface { background-color: var(--bg-surface); }
+  .bg-surface-2 { background-color: var(--bg-surface-2); }
+  .bg-sidebar { background-color: var(--bg-sidebar); }
+  .border-theme { border-color: var(--border); }
+  .text-theme { color: var(--text); }
+  .text-soft { color: var(--text-soft); }
+  .text-muted { color: var(--text-muted); }
+  .text-placeholder { color: var(--text-placeholder); }
+  .text-accent { color: var(--accent); }
+  .bg-accent { background-color: var(--accent); }
+  .ring-accent { --tw-ring-color: var(--ring); }
+}
