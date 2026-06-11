@@ -34,10 +34,9 @@ async def init_db() -> None:
         await conn.run_sync(Base.metadata.create_all)
 
 
-async def run_migrations() -> None:
-    """Apply pending Alembic migrations at startup. Safe to call multiple times."""
-    import asyncio
-    import os
+def _run_migrations_sync() -> None:
+    """Synchronously apply Alembic migrations. Runs entirely with the psycopg2 driver
+    (see alembic/env.py) so there is no event loop involved."""
     from pathlib import Path
     from alembic import command
     from alembic.config import Config
@@ -45,4 +44,15 @@ async def run_migrations() -> None:
     # Resolve alembic.ini relative to this file so it works regardless of CWD
     ini_path = Path(__file__).resolve().parent.parent.parent / "alembic.ini"
     cfg = Config(str(ini_path))
-    await asyncio.get_event_loop().run_in_executor(None, command.upgrade, cfg, "head")
+    command.upgrade(cfg, "head")
+
+
+async def run_migrations() -> None:
+    """Apply pending Alembic migrations at startup. Safe to call multiple times.
+
+    Runs the synchronous Alembic upgrade in a worker thread so it never blocks or
+    nests inside the application's running event loop.
+    """
+    import asyncio
+
+    await asyncio.to_thread(_run_migrations_sync)

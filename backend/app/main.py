@@ -25,9 +25,13 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await run_migrations()
-    await seed_admin()
-    app.state.insight_service = InsightService()
+    try:
+        await run_migrations()
+        await seed_admin()
+        app.state.insight_service = InsightService()
+    except Exception:
+        logger.exception("Fatal error during application startup")
+        raise
     yield
 
 
