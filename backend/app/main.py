@@ -25,13 +25,31 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    import sys
+    import traceback
+
+    # InsightService never touches the network at construction — safe to build first.
+    app.state.insight_service = InsightService()
+
     try:
         await run_migrations()
-        await seed_admin()
-        app.state.insight_service = InsightService()
     except Exception:
-        logger.exception("Fatal error during application startup")
+        # Raw stderr print guarantees the traceback survives even if logging is
+        # misconfigured — then re-raise so the failure is loud.
+        print("=== STARTUP MIGRATION FAILED ===", file=sys.stderr, flush=True)
+        traceback.print_exc()
+        sys.stderr.flush()
         raise
+
+    # Seeding is best-effort: a transient DB hiccup here should not prevent the
+    # API from starting. The admin can be created on a later request/restart.
+    try:
+        await seed_admin()
+    except Exception:
+        print("=== ADMIN SEEDING FAILED (continuing) ===", file=sys.stderr, flush=True)
+        traceback.print_exc()
+        sys.stderr.flush()
+
     yield
 
 

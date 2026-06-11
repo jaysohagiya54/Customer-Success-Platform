@@ -1,5 +1,4 @@
 import os
-from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 
@@ -7,8 +6,11 @@ from alembic import context
 
 config = context.config
 
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+# NOTE: intentionally NOT calling logging.config.fileConfig() here.
+# When migrations run inside the live FastAPI app (startup lifespan), fileConfig()
+# would tear down and replace the app's configured root logger (it clears handlers
+# and disables existing loggers), breaking JSON logging for the rest of the process.
+# The app configures logging itself in app.core.logging.configure_logging().
 
 # Override sqlalchemy.url from DATABASE_URL env var so Docker / Render works without editing alembic.ini.
 # Alembic runs migrations synchronously with the psycopg2 (sync) driver — NOT asyncpg — to avoid
