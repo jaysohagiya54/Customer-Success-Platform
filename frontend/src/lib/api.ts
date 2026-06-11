@@ -33,9 +33,17 @@ api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const original = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined;
-    const isAuthCall = original?.url?.includes("/auth/login") || original?.url?.includes("/auth/refresh");
+    const url = original?.url ?? "";
+    // These calls manage auth state themselves — never run refresh/redirect for them.
+    // /auth/me is a session probe (used by guards); letting it trigger refresh + a
+    // hard window redirect causes an infinite reload loop on the login page.
+    const isAuthProbe =
+      url.includes("/auth/login") ||
+      url.includes("/auth/refresh") ||
+      url.includes("/auth/register") ||
+      url.includes("/auth/me");
 
-    if (error.response?.status === 401 && original && !original._retried && !isAuthCall) {
+    if (error.response?.status === 401 && original && !original._retried && !isAuthProbe) {
       original._retried = true;
       refreshPromise = refreshPromise ?? refreshAccessToken();
       const ok = await refreshPromise;
@@ -43,8 +51,13 @@ api.interceptors.response.use(
       if (ok) {
         return api(original);
       }
+      // Refresh failed — bounce to login, but only if we're not already on an auth page
+      // (otherwise the redirect reloads the page that just made the call → loop).
       if (typeof window !== "undefined") {
-        window.location.href = "/login";
+        const path = window.location.pathname;
+        if (path !== "/login" && path !== "/register") {
+          window.location.href = "/login";
+        }
       }
     }
     return Promise.reject(error);
