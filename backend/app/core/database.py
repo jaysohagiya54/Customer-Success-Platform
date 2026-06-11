@@ -53,6 +53,29 @@ async def init_db() -> None:
         await conn.run_sync(Base.metadata.create_all)
 
 
+def _heal_stale_version(cfg) -> None:
+    """Recover from a corrupted alembic_version state.
+
+    A prior buggy migration could stamp a revision without actually creating tables.
+    If alembic_version points at a revision but the core ``users`` table is missing,
+    the version is stale — clear it so the (fixed) initial migration re-runs from scratch.
+    """
+    from sqlalchemy import create_engine, inspect, text
+
+    url = cfg.get_main_option("sqlalchemy.url")
+    eng = create_engine(url, poolclass=None)
+    try:
+        with eng.connect() as conn:
+            insp = inspect(conn)
+            tables = set(insp.get_table_names())
+            if "alembic_version" in tables and "users" not in tables:
+                # Stamped but real schema missing → wipe the stamp.
+                conn.execute(text("DELETE FROM alembic_version"))
+                conn.commit()
+    finally:
+        eng.dispose()
+
+
 def _run_migrations_sync() -> None:
     """Synchronously apply Alembic migrations. Runs entirely with the psycopg2 driver
     (see alembic/env.py) so there is no event loop involved."""
@@ -63,6 +86,17 @@ def _run_migrations_sync() -> None:
     # Resolve alembic.ini relative to this file so it works regardless of CWD
     ini_path = Path(__file__).resolve().parent.parent.parent / "alembic.ini"
     cfg = Config(str(ini_path))
+
+    # Make env.py's DATABASE_URL override apply for the heal step too by loading it.
+    import os
+    db_url = os.environ.get("DATABASE_URL", "")
+    if db_url:
+        db_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
+        if db_url.startswith("postgres://"):
+            db_url = "postgresql://" + db_url[len("postgres://"):]
+        cfg.set_main_option("sqlalchemy.url", db_url)
+
+    _heal_stale_version(cfg)
     command.upgrade(cfg, "head")
 
 
